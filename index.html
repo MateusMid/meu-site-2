@@ -1,61 +1,570 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Site do Mateus</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbitalis Systems | Autonomous Orbital Infrastructure</title>
+
+    <style>
+        :root {
+            --bg: #05070d;
+            --bg-secondary: #0b0f1a;
+            --text: #ffffff;
+            --muted: #9aa3b2;
+            --accent: #00e0ff;
+            --accent2: #7b61ff;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.08);
+            --glow: 0 0 20px rgba(0, 224, 255, 0.5), 0 0 40px rgba(0, 224, 255, 0.3);
+        }
+
+        [data-theme="light"] {
+            --bg: #f5f7fb;
+            --bg-secondary: #ffffff;
+            --text: #0a0f1c;
+            --muted: #5c6572;
+            --accent: #0057ff;
+            --accent2: #7b61ff;
+            --glass: rgba(255, 255, 255, 0.6);
+            --border: rgba(0, 0, 0, 0.08);
+            --glow: 0 0 20px rgba(0, 87, 255, 0.4), 0 0 40px rgba(0, 87, 255, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
+            cursor: none;
+        }
+
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20000;
+            transition: opacity 0.8s ease;
+        }
+
+        .loader h1 {
+            font-size: 1.5rem;
+            letter-spacing: 3px;
+            color: var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            z-index: 9999;
+        }
+
+        .cursor {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            mix-blend-mode: exclusion;
+            transition: transform 0.15s ease;
+            z-index: 10000;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+        }
+
+        nav {
+            position: fixed;
+            width: 100%;
+            padding: 25px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(25px);
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            transition: 0.4s ease;
+        }
+
+        nav.scrolled {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        nav .logo {
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+        }
+
+        nav .links a {
+            margin-left: 35px;
+            text-decoration: none;
+            color: var(--muted);
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+
+        nav .links a:hover {
+            color: var(--text);
+        }
+
+        .theme-toggle {
+            margin-left: 35px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--glass);
+            color: var(--text);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .hero {
+            height: 120vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: shine 6s linear infinite;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        .hero p {
+            max-width: 750px;
+            margin-top: 30px;
+            color: var(--muted);
+            font-size: 1.2rem;
+            line-height: 1.7;
+        }
+
+        .cta {
+            margin-top: 50px;
+            padding: 14px 35px;
+            border-radius: 40px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border: none;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .cta:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px var(--accent);
+        }
+
+        section {
+            min-height: 100vh;
+            padding: 160px 10%;
+            opacity: 0;
+            transform: translateY(80px);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        section h2 {
+            font-size: 3rem;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+        }
+
+        .glass {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            padding: 50px;
+            backdrop-filter: blur(30px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+            transition: transform 0.3s ease, box-shadow 0.4s ease;
+        }
+
+        .glass:hover {
+            transform: translateY(-12px);
+            box-shadow: var(--glow), 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        footer {
+            padding: 100px 10%;
+            text-align: center;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.8rem;
+            }
+
+            section {
+                padding: 120px 7%;
+            }
+
+            nav .links a {
+                margin-left: 15px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
 </head>
 
-<body style="margin:0; font-family: Arial; background-color:#111; color:#eee;">
+<body>
 
-  <!-- TOPO -->
-  <div style="background:#000; padding:20px; text-align:center;">
-    <h1>Site do Mateus</h1>
-    <p>Meu primeiro site completo em HTML</p>
-  </div>
+    <div class="loader">
+        <h1>INITIALIZING ORBITAL NETWORK...</h1>
+    </div>
 
-  <!-- MENU -->
-  <div style="background:#222; padding:10px; text-align:center;">
-    <a href="#sobre" style="color:white; margin:10px;">Sobre</a>
-    <a href="#projetos" style="color:white; margin:10px;">Projetos</a>
-    <a href="#contato" style="color:white; margin:10px;">Contato</a>
-  </div>
+    <div class="progress-bar"></div>
+    <div class="cursor"></div>
+    <canvas id="space"></canvas>
 
-  <!-- SOBRE -->
-  <div id="sobre" style="padding:30px;">
-    <h2>Sobre mim</h2>
-    <p>
-      Meu nome é Mateus e esse site foi feito apenas com HTML.
-      Ele está no ar usando GitHub Pages.
-    </p>
+    <nav>
+        <div class="logo">ORBITALIS SYSTEMS</div>
+        <div class="links">
+            <a href="#infrastructure">Infraestrutura</a>
+            <a href="#missions">Missões</a>
+            <a href="#roadmap">Roadmap</a>
+            <button class="theme-toggle" onclick="toggleTheme()">Tema</button>
+        </div>
+    </nav>
 
-    <img src="imagens2/imagem1.png" width="300">
-  </div>
+    <div class="hero">
+        <h1>Autonomous Orbital Infrastructure</h1>
+        <p>Construindo redes orbitais autônomas, satélites inteligentes e estações modulares para sustentar a
+            civilização interplanetária.</p>
+        <button class="cta">Explorar Missão</button>
+    </div>
 
-  <!-- PROJETOS -->
-  <div id="projetos" style="padding:30px; background:#1a1a1a;">
-    <h2>Meus projetos</h2>
+    <section id="infrastructure">
+        <h2>Infraestrutura Orbital Autônoma</h2>
+        <div class="grid">
+            <div class="glass">
+                <h3>Orbital Grid™</h3>
+                <p>Rede distribuída de satélites inteligentes interconectados capazes de auto-roteamento, correção
+                    orbital automática e comunicação quântica segura.</p>
+            </div>
+            <div class="glass">
+                <h3>Modular Stations</h3>
+                <p>Estações modulares expansíveis com capacidade de manutenção autônoma, fabricação em órbita e
+                    integração com missões lunares.</p>
+            </div>
+            <div class="glass">
+                <h3>Autonomous Drones</h3>
+                <p>Drones espaciais equipados com IA embarcada para inspeção, reparo e defesa orbital estratégica.</p>
+            </div>
+        </div>
+    </section>
 
-    <h3>Projeto 1</h3>
-    <p>Meu primeiro site publicado na internet.</p>
-    <img src="imagens2/imagem2.png" width="300">
+    <section id="missions">
+        <h2>Missões Estratégicas</h2>
+        <div class="grid">
+            <div class="glass">
+                <h3>LEO Network</h3>
+                <p>Cobertura total em órbita baixa para comunicação global ultrarrápida e processamento descentralizado.
+                </p>
+            </div>
+            <div class="glass">
+                <h3>Lunar Relay</h3>
+                <p>Infraestrutura de comunicação e suporte para operações lunares permanentes até 2032.</p>
+            </div>
+            <div class="glass">
+                <h3>Deep Space Nodes</h3>
+                <p>Nós de transmissão para futuras missões interplanetárias e exploração de Marte.</p>
+            </div>
+        </div>
+    </section>
 
-    <h3>Projeto 2</h3>
-    <p>Em breve…</p>
-  </div>
+    <section id="roadmap">
+        <h2>Roadmap 2026 — 2035</h2>
+        <div class="glass">
+            <p><strong>2026:</strong> Lançamento da primeira malha Orbital Grid™</p>
+            <p><strong>2028:</strong> Integração com estações modulares LEO</p>
+            <p><strong>2030:</strong> Operação autônoma completa com IA embarcada</p>
+            <p><strong>2032:</strong> Infraestrutura lunar ativa</p>
+            <p><strong>2035:</strong> Primeira estação interplanetária orbital</p>
+        </div>
+    </section>
 
-  <!-- CONTATO -->
-  <div id="contato" style="padding:30px;">
-    <h2>Contato</h2>
-    <p>Email: </p>
-    <p>GitHub: </p>
-  </div>
+    <section id="metrics">
+        <h2>Números Orbitais</h2>
+        <div class="grid">
+            <div class="glass">
+                <h3><span class="counter" data-target="128">0</span></h3>
+                <p>Satélites Ativos</p>
+            </div>
+            <div class="glass">
+                <h3><span class="counter" data-target="42">0</span></h3>
+                <p>Missões Concluídas</p>
+            </div>
+            <div class="glass">
+                <h3><span class="counter" data-target="12">0</span></h3>
+                <p>Países Parceiros</p>
+            </div>
+        </div>
+    </section>
 
-  <!-- RODAPÉ -->
-  <div style="background:#000; padding:15px; text-align:center;">
-    <p>© 2026 - Site feito só com HTML</p>
-  </div>
+    <section id="investors">
+        <h2>Investidores Estratégicos</h2>
+        <div class="glass">
+            <p>Fundos institucionais globais, agências aeroespaciais e consórcios privados de tecnologia avançada.</p>
+            <p>Parcerias estratégicas com fabricantes aeroespaciais e laboratórios de pesquisa de propulsão avançada.
+            </p>
+        </div>
+    </section>
+
+    <section id="team">
+        <h2>Equipe Executiva</h2>
+        <div class="grid">
+            <div class="glass">
+                <h3>CEO</h3>
+                <p>Especialista em sistemas autônomos e engenharia orbital.</p>
+            </div>
+            <div class="glass">
+                <h3>CTO</h3>
+                <p>Arquiteto de redes distribuídas espaciais e IA embarcada.</p>
+            </div>
+            <div class="glass">
+                <h3>Chief Mission Officer</h3>
+                <p>Responsável por estratégia de expansão interplanetária.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing">
+        <h2>Modelos de Parceria</h2>
+        <div class="grid">
+            <div class="glass">
+                <h3>Enterprise Orbital</h3>
+                <p>Infraestrutura dedicada + controle estratégico.<br><strong>Contrato Institucional</strong></p>
+            </div>
+            <div class="glass">
+                <h3>Government Access</h3>
+                <p>Acesso prioritário a redes e estações modulares.<br><strong>Parceria Pública</strong></p>
+            </div>
+            <div class="glass">
+                <h3>Deep Space Consortium</h3>
+                <p>Integração com missões além da órbita lunar.<br><strong>Joint Venture</strong></p>
+            </div>
+        </div>
+    </section>
+
+    <section id="cta-final">
+        <h2>O Espaço é o Próximo Continente</h2>
+        <div class="glass">
+            <p>A Orbitalis Systems está construindo a infraestrutura que sustentará a civilização além da Terra.</p>
+            <button class="cta">Solicitar Parceria Estratégica</button>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Orbitalis Systems</p>
+        <p>Autonomous Infrastructure for the Interplanetary Era</p>
+    </footer>
+
+    <script>
+        // Cursor custom
+        const cursor = document.querySelector(".cursor");
+        document.addEventListener("mousemove", e => {
+            cursor.style.left = `${e.clientX}px`;
+            cursor.style.top = `${e.clientY}px`;
+        });
+
+        // Progress bar
+        window.addEventListener("scroll", () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.body.scrollHeight - window.innerHeight;
+            document.querySelector(".progress-bar").style.width = `${(scrollTop / docHeight) * 100}%`;
+        });
+
+        // Nav scrolled
+        window.addEventListener("scroll", () => {
+            document.querySelector("nav").classList.toggle("scrolled", window.scrollY > 50);
+        });
+
+        // Section reveal
+        const sections = document.querySelectorAll("section");
+        window.addEventListener("scroll", () => {
+            sections.forEach(sec => {
+                if (sec.getBoundingClientRect().top < window.innerHeight - 100) {
+                    sec.classList.add("visible");
+                }
+            });
+        });
+
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.hasAttribute("data-theme")) {
+                html.removeAttribute("data-theme");
+            } else {
+                html.setAttribute("data-theme", "light");
+            }
+        }
+
+        // Canvas particles
+        const canvas = document.getElementById("space");
+        const ctx = canvas.getContext("2d");
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+
+        let stars = [];
+        for (let i = 0; i < 120; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.4 + 0.4,
+                vx: (Math.random() - 0.5) * 0.25,
+                vy: (Math.random() - 0.5) * 0.25
+            });
+        }
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach((s, i) => {
+                s.x += s.vx;
+                s.y += s.vy;
+                if (s.x < 0 || s.x > canvas.width) s.vx *= -1;
+                if (s.y < 0 || s.y > canvas.height) s.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                ctx.fillStyle = "#00e0ff";
+                ctx.fill();
+
+                for (let j = i + 1; j < stars.length; j++) {
+                    const dx = s.x - stars[j].x;
+                    const dy = s.y - stars[j].y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < 110) {
+                        ctx.beginPath();
+                        ctx.moveTo(s.x, s.y);
+                        ctx.lineTo(stars[j].x, stars[j].y);
+                        ctx.strokeStyle = `rgba(0,224,255,${0.12 * (1 - dist / 110)})`;
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(drawStars);
+        }
+        drawStars();
+
+        // Loader
+        window.addEventListener("load", () => {
+            const loader = document.querySelector(".loader");
+            setTimeout(() => {
+                loader.style.opacity = "0";
+                setTimeout(() => loader.remove(), 800);
+            }, 1400);
+        });
+
+        // Magnetic CTA
+        document.querySelectorAll(".cta").forEach(btn => {
+            btn.addEventListener("mousemove", e => {
+                const rect = btn.getBoundingClientRect();
+                const mx = e.clientX - rect.left - rect.width / 2;
+                const my = e.clientY - rect.top - rect.height / 2;
+                btn.style.transform = `translate(${mx * 0.2}px, ${my * 0.2}px) scale(1.05)`;
+            });
+            btn.addEventListener("mouseleave", () => {
+                btn.style.transform = "translate(0,0) scale(1)";
+            });
+        });
+
+        // Contadores animados
+        const counters = document.querySelectorAll(".counter");
+
+        function animateValue(el) {
+            const target = parseInt(el.getAttribute("data-target"));
+            let current = parseInt(el.innerText) || 0;
+            const increment = target / 120;
+
+            if (current < target) {
+                current += increment;
+                el.innerText = Math.ceil(current);
+                requestAnimationFrame(() => animateValue(el));
+            } else {
+                el.innerText = target;
+            }
+        }
+
+        const metricsObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                counters.forEach(el => animateValue(el));
+                metricsObserver.disconnect();
+            }
+        }, { threshold: 0.5 });
+
+        const metricsEl = document.querySelector("#metrics");
+        if (metricsEl) metricsObserver.observe(metricsEl);
+    </script>
 
 </body>
+
 </html>
-
-
